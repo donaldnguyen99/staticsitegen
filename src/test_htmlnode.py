@@ -130,3 +130,7 @@ class TestParentNode(unittest.TestCase):
             ]
         )
         self.assertEqual(node.to_html(), "<body><p><i>Italicized text</i></p></body>")
+
+
+if __name__ == "__main__":
+    unittest.main()
