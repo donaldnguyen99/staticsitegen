@@ -1,11 +1,15 @@
 import unittest
 
 from textnode import TextNode, TextType
-from htmlnode import LeafNode
+from htmlnode import LeafNode, ParentNode
 from util import (text_node_to_html_node, split_nodes_delimiter,\
                  extract_markdown_images, extract_markdown_links,\
                  split_nodes_image, split_nodes_link, split_nodes_link_helper,\
-                 text_to_textnodes, markdown_to_blocks, block_to_block_type)
+                 text_to_textnodes, markdown_to_blocks, block_to_block_type,\
+                 text_to_children, block_to_heading_html_node, block_to_code_html_node,\
+                 block_to_quote_html_node, block_to_unordered_list_html_node,\
+                 block_to_ordered_list_html_node, block_to_paragraph_html_node,\
+                 markdown_to_html_node)
 
 class TestTextNodeToHTMLNode(unittest.TestCase):
     def test_text_node_to_html_node_text(self):
@@ -479,12 +483,203 @@ class TestBlockToBlockType(unittest.TestCase):
         self.assertEqual(block_to_block_type(block), "quote")
     
     def test_block_to_block_type_code(self):
-        block = "```>asdf\n> asdf\n>asdf```"
+        block = "```\n>asdf\n> asdf\n>asdf\n```"
         self.assertEqual(block_to_block_type(block), "code")
 
     def test_block_to_block_type_heading(self):
         block = "### Heading"
         self.assertEqual(block_to_block_type(block), "heading")
+
+
+class TestTextToChildren(unittest.TestCase):
+    def test_text_to_children(self):
+        self.assertEqual(
+            str(text_to_children("This is a **bold** word")),
+            str([LeafNode(None, "This is a "), LeafNode("b", "bold"), LeafNode(None, " word")])
+        )
+    
+    def test_text_to_children_are_leafnodes(self):
+        children = text_to_children("This is a **bold** word")
+        for child in children:
+            self.assertIsInstance(child, LeafNode)
+    
+    def test_text_to_children_2(self):
+        self.assertEqual(
+            str(text_to_children("This is an image ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)")),
+            str([LeafNode(None, "This is an image "), LeafNode("img", "", {"src": "https://i.imgur.com/fJRm4Vk.jpeg", "alt": "obi wan"})])
+        )
+
+    def test_text_to_children_3(self):
+        self.assertEqual(
+            str(text_to_children("This is a link [to boot dev](https://www.boot.dev) `and code`")),
+            str([LeafNode(None, "This is a link "), LeafNode("a", "to boot dev", {"href": "https://www.boot.dev"}), LeafNode(None, " "), LeafNode("code", "and code")])
+        )
+
+
+class TestBlockToHeadingHTMLNode(unittest.TestCase):
+    def test_block_to_heading_html_node(self):
+        block = "# My heading"
+        self.assertEqual(
+            str(block_to_heading_html_node(block)),
+            str(ParentNode("h1", [LeafNode(None, "My heading")]))
+        )
+
+    def test_block_to_heading_html_node_2(self):
+        block = "### My heading"
+        self.assertEqual(
+            str(block_to_heading_html_node(block)),
+            str(ParentNode("h3", [LeafNode(None, "My heading")]))
+        )
+    
+    def test_block_to_heading_html_node_htmlnode(self):
+        block = "# My heading"
+        self.assertIsInstance(block_to_heading_html_node(block), ParentNode)
+
+    def test_block_to_heading_html_node_children(self):
+        block = "# My heading"
+        children = block_to_heading_html_node(block).children
+        for child in children:
+            self.assertIsInstance(child, LeafNode)
+    
+
+class TestBlockToCodeHTMLNode(unittest.TestCase):
+    def test_block_to_code_html_node(self):
+        block = "```\nThis is code\n```"
+        self.assertEqual(
+            str(block_to_code_html_node(block)),
+            str(ParentNode("pre", [LeafNode("code", "This is code")]))
+        )
+    
+    def test_block_to_code_html_node_htmlnode(self):
+        block = "```\nThis is code\n```"
+        self.assertIsInstance(block_to_code_html_node(block), ParentNode)
+
+    def test_block_to_code_html_node_children(self):
+        block = "```\nThis is code\n```"
+        children = block_to_code_html_node(block).children
+        for child in children:
+            self.assertIsInstance(child, LeafNode)
+
+
+class TestBlockToQuoteHTMLNode(unittest.TestCase):
+    def test_block_to_quote_html_node(self):
+        block = "> This is a quote\n> This is another quote"
+        self.assertEqual(
+            str(block_to_quote_html_node(block)),
+            str(ParentNode("blockquote", [LeafNode(None, "This is a quote\nThis is another quote")]))
+        )
+    
+    def test_block_to_quote_html_node_htmlnode(self):
+        block = "> This is a quote"
+        self.assertIsInstance(block_to_quote_html_node(block), ParentNode)
+
+    def test_block_to_quote_html_node_children(self):
+        block = "> This is a quote"
+        children = block_to_quote_html_node(block).children
+        for child in children:
+            self.assertIsInstance(child, LeafNode)
+
+
+class TestBlockToUnorderedListHTMLNode(unittest.TestCase):
+    def test_block_to_unordered_list_html_node(self):
+        block = "* This is a list item\n* This is another list item"
+        self.assertEqual(
+            str(block_to_unordered_list_html_node(block)),
+            str(ParentNode("ul", [ParentNode("li", [LeafNode(None, "This is a list item")]), ParentNode("li", [LeafNode(None, "This is another list item")])]))
+        )
+    
+    def test_block_to_unordered_list_html_node_htmlnode(self):
+        block = "* This is a list item"
+        self.assertIsInstance(block_to_unordered_list_html_node(block), ParentNode)
+
+    def test_block_to_unordered_list_html_node_children(self):
+        block = "* This is a list item"
+        children = block_to_unordered_list_html_node(block).children
+        for child in children:
+            self.assertIsInstance(child, ParentNode)
+    
+    def test_block_to_unordered_list_html_node_children_li(self):
+        block = "* This is a list item"
+        children = block_to_unordered_list_html_node(block).children
+        child: ParentNode
+        for child in children:
+            for subchild in child.children:
+                self.assertIsInstance(subchild, LeafNode)
+
+
+class TestBlockToOrderedListHTMLNode(unittest.TestCase):
+    def test_block_to_ordered_list_html_node(self):
+        block = "1. This is a list item\n2. This is another list item"
+        self.assertEqual(
+            str(block_to_ordered_list_html_node(block)),
+            str(ParentNode("ol", [ParentNode("li", [LeafNode(None, "This is a list item")]), ParentNode("li", [LeafNode(None, "This is another list item")])]))
+        )
+    
+    def test_block_to_ordered_list_html_node_htmlnode(self):
+        block = "1. This is a list item"
+        self.assertIsInstance(block_to_ordered_list_html_node(block), ParentNode)
+
+    def test_block_to_ordered_list_html_node_children(self):
+        block = "1. This is a list item"
+        children = block_to_ordered_list_html_node(block).children
+        for child in children:
+            self.assertIsInstance(child, ParentNode)
+    
+    def test_block_to_ordered_list_html_node_children_li(self):
+        block = "1. This is a list item"
+        children = block_to_ordered_list_html_node(block).children
+        child: ParentNode
+        for child in children:
+            for subchild in child.children:
+                self.assertIsInstance(subchild, LeafNode)
+
+
+class TestBlockToParagraphHTMLNode(unittest.TestCase):
+    def test_block_to_paragraph_html_node(self):
+        block = "This is a paragraph"
+        self.assertEqual(
+            str(block_to_paragraph_html_node(block)),
+            str(ParentNode("p", [LeafNode(None, "This is a paragraph")]))
+        )
+    
+    def test_block_to_paragraph_html_node_htmlnode(self):
+        block = "This is a paragraph"
+        self.assertIsInstance(block_to_paragraph_html_node(block), ParentNode)
+
+    def test_block_to_paragraph_html_node_children(self):
+        block = "This is a paragraph **with bold** and *italic*"
+        children = block_to_paragraph_html_node(block).children
+        for child in children:
+            self.assertIsInstance(child, LeafNode)
+
+
+class TestMarkdownToHtmlNode(unittest.TestCase):
+    def test_markdown_to_html_node_simple_heading(self):
+        res = markdown_to_html_node("""# My heading""")
+        self.assertEqual(f"{res}", 
+            "HTMLNode(div, None, [HTMLNode(h1, None, [HTMLNode(None, My heading, None, None)], None)], None)"
+        )
+    
+    def test_markdown_to_html_node_heading_and_paragraph(self):
+        res = markdown_to_html_node("""# My heading
+
+this is a **paragraph**""")
+        self.assertEqual(f"{res}", 
+            "HTMLNode(div, None, [HTMLNode(h1, None, [HTMLNode(None, My heading, None, None)], None), HTMLNode(p, None, [HTMLNode(None, this is a , None, None), HTMLNode(b, paragraph, None, None)], None)], None)"
+        )
+    
+    def test_markdown_to_html_node_heading_and_paragraph_and_list(self):
+        res = markdown_to_html_node("""# My heading
+
+this is a **paragraph** and a list
+
+* item 1
+* item 2
+""")
+        self.assertEqual(f"{res}", 
+            "HTMLNode(div, None, [HTMLNode(h1, None, [HTMLNode(None, My heading, None, None)], None), HTMLNode(p, None, [HTMLNode(None, this is a , None, None), HTMLNode(b, paragraph, None, None), HTMLNode(None,  and a list, None, None)], None), HTMLNode(ul, None, [HTMLNode(li, None, [HTMLNode(None, item 1, None, None)], None), HTMLNode(li, None, [HTMLNode(None, item 2, None, None)], None)], None)], None)"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
