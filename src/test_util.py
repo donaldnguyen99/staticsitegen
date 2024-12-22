@@ -9,7 +9,7 @@ from util import (text_node_to_html_node, split_nodes_delimiter,\
                  text_to_children, block_to_heading_html_node, block_to_code_html_node,\
                  block_to_quote_html_node, block_to_unordered_list_html_node,\
                  block_to_ordered_list_html_node, block_to_paragraph_html_node,\
-                 markdown_to_html_node)
+                 markdown_to_html_node, extract_title)
 
 class TestTextNodeToHTMLNode(unittest.TestCase):
     def test_text_node_to_html_node_text(self):
@@ -680,6 +680,25 @@ this is a **paragraph** and a list
             "HTMLNode(div, None, [HTMLNode(h1, None, [HTMLNode(None, My heading, None, None)], None), HTMLNode(p, None, [HTMLNode(None, this is a , None, None), HTMLNode(b, paragraph, None, None), HTMLNode(None,  and a list, None, None)], None), HTMLNode(ul, None, [HTMLNode(li, None, [HTMLNode(None, item 1, None, None)], None), HTMLNode(li, None, [HTMLNode(None, item 2, None, None)], None)], None)], None)"
         )
 
+
+class TestExtractTitle(unittest.TestCase):
+    def test_extract_title(self):
+        self.assertEqual(
+            extract_title("# my title"),
+            "my title"
+        )
+    
+    def test_extract_title_2(self):
+        self.assertEqual(
+            extract_title("# my title\n\n## new subheading"),
+            "my title"
+        )
+    
+    def test_extract_title_3(self):
+        self.assertEqual(
+            extract_title("## my title\n\n# new subheading"),
+            "new subheading"
+        )
 
 if __name__ == "__main__":
     unittest.main()

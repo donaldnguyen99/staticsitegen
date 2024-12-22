@@ -1,4 +1,4 @@
-import re
+import os, re, shutil
 from enum import Enum
 from typing import List
 
@@ -187,4 +187,11 @@ def markdown_to_html_node(markdown: str):
         block_type = block_to_block_type(markdown_block)
         leaf_nodes.append(block_to_html_node_funcs[block_type](markdown_block))
     return ParentNode("div", leaf_nodes)
-        
+
+def extract_title(markdown):
+    blocks = markdown_to_blocks(markdown)
+    for block in blocks:
+        if block_to_block_type(block) == "heading" and block.startswith("# "):
+            return block[2:].strip()
+    raise Exception("A title cannot be found")
+
