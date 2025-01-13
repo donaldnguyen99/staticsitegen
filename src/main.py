@@ -32,6 +32,14 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, "w") as dest_file:
         dest_file.write(html)
 
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    for item in os.listdir(dir_path_content):
+        item_path = os.path.join(dir_path_content, item)
+        if os.path.isfile(item_path) and item_path.endswith(".md"):
+                generate_page(item_path, template_path, os.path.join(dest_dir_path, item).removesuffix(".md") + ".html")
+        else:
+            generate_pages_recursive(item_path, template_path, os.path.join(dest_dir_path, item))
+
 def main():
     print(TextNode("This is a text node", TextType.BOLD, "https://www.boot.dev"))
     copy_source_destination(
@@ -39,7 +47,7 @@ def main():
         os.path.join(os.path.curdir, "public"),
         verbose=True
     )
-    generate_page("content/index.md", "template.html", "public/index.html")
+    generate_pages_recursive("content", "template.html", "public")
     
 if __name__ == '__main__':
     main()
