@@ -34,7 +34,8 @@ def split_nodes_delimiter(old_nodes: List[TextNode], delimiter: str, text_type: 
 
         # See if any text type TextNodes can be split into multiple nodes
         if old_node.text.count(delimiter) % 2 != 0:
-            raise Exception(f"Invalid markdown: missing a closing delimiter ({delimiter}).")
+            print(Exception(f"Invalid markdown: missing a closing delimiter ({delimiter})."))
+            continue
         delimited_text = old_node.text.split(delimiter)
         
         is_text = True
