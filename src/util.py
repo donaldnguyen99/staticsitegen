@@ -100,6 +100,7 @@ def text_to_textnodes(text):
     delimiters = [
         ("**", TextType.BOLD),
         ("*", TextType.ITALIC),
+        ("_", TextType.ITALIC),
         ("`", TextType.CODE)
     ]
 
@@ -150,7 +151,10 @@ def block_to_code_html_node(markdown: str):
 
 def block_to_quote_html_node(markdown: str):
     # Assuming no nested blockquotes
-    text = "\n".join([line.strip(">").strip() for line in markdown.splitlines()])
+    text = " ".join([
+        line.strip(">").strip() \
+            for line in markdown.splitlines()
+        ])
     return ParentNode("blockquote", text_to_children(text))
 
 def block_to_unordered_list_html_node(markdown: str):
